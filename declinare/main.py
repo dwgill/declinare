@@ -25,8 +25,8 @@ def proc_words(words):
 def handle_noun(word):
     string = "{word}: ".format(word=word)
     for case in get_cases(word):
-        string = string + '\n\t{case_name}: ({suffix})'.format(
-                case_name=case.name, suffix=case.suffix)
+        string = string + '\n\t{case_name}: {word}-{suffix}'.format(
+                word=word, case_name=case.name, suffix=case.suffix)
     return string
 
 if __name__ == "__main__":
