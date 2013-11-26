@@ -27,7 +27,7 @@ class Inflector(object):
     def __init__(self, inflections, max_length):
         self.inflections = {}
         self.max_length = max_length
-        def make_inflection(name, suffix):
+        for name, suffix in inflections:
             inflection = Inflection(name, suffix, len(suffix))
             self.inflections.setdefault(suffix, []).append(inflection)
 
