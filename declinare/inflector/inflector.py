@@ -32,6 +32,7 @@ class Inflector(object):
             self.inflections.setdefault(suffix, []).append(inflection)
 
     def inflect(self, word):
+        word = word.lower()
         inflections = []
         get = lambda suffix: self.inflections.get(suffix,[])
 
