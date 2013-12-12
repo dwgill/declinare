@@ -27,14 +27,17 @@ def main():
 def proc_words(words):
     print('~nouns~')
     for word in words:
-		print(handle_noun(word))
-#		print(handle_verb(word))
+		handle_noun(word)
+#		handle_verb(word)
+	cases_conj #(all the forms the word might be)
+
+
 
 def handle_noun(word):
 	string = "{word}: ".format(word=word)
 	for case in noun_cases.inflect(word):
 		string = string + '\n\t{case_name}: {word}-{suffix}'.format(word=word[:-case.suffix_length], case_name=case.name, suffix=case.suffix)
-		print(word[:-case.suffix_length]) # gets stem, puts in database
+		print(word[:case.suffix_length]) # gets stem, put in database
 	return string
 
 #def handle_verb(word):
@@ -44,18 +47,17 @@ def handle_noun(word):
 #	return string
 
 def create_db():
-	os.remove('stems.db') # TODO obviously inefficeient, will fix later
 	db = sqlite3.connect('stems.db')
 	c = db.cursor() #creates something to enter SQL commands
 	# Create a table 'Stems' with 10 columns 
-	c.execute('''CREATE TABLE Stems (_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, Stem text, ID long, IID long, IIID long, IVD long, VD long, IC long, IIC long, IIIC long, IVC long)''')
+	c.execute('''CREATE TABLE Stems (_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, Stem text, D1 long, D2 long, D3 long, D4 long, D5 long, VERB long)''')
 	# return cursor to work with
 	return c
 
 def tally_db(stem, cases_conjs, cursor):
 	cursor.execute("SELECT _id FROM Stems WHERE Stem = ?",[stem])
 	if cursor.rowcount <= 0: # stem is not in database
-		c.execute("INSERT INTO Stems (Stem, ID, IID, IIID, IVD, VD, IC, IIC, IIIC, IVC) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",(stem, 0, 0, 0, 0, 0, 0, 0, 0, 0)) # the last 9 ?s are unnecessary
+		c.execute("INSERT INTO Stems (Stem, D1, D2, D3, D4, D5, VERB) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",(stem, 0, 0, 0, 0, 0, 0)) # the last 9 ?s are unnecessary
 	for case_conj in cases_conjs:
 		# TODO loop through every case and conj and tally it for that stem in the database		
 		pass
