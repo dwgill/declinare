@@ -1,6 +1,4 @@
-#!/usr/bin/env python 
-# vim: set fileencoding=UTF-8
-from __future__ import unicode_literals
+#!/usr/bin/env python
 from inflector import Inflector
 from noun_data import noun_data
 from verb_data import verb_suffixes as verb_data
@@ -8,61 +6,79 @@ import re
 import sys
 import sqlite3
 import os
+from irregwords import irregulars
 
 noun_cases = Inflector(noun_data)
 verb_forms = Inflector(verb_data)
 
 def main():
-    len_args = len(sys.argv[1:])
-    if len_args == 0:
-        print("No valid input.")
-    elif len_args == 1:
-        string = sys.argv[0]
-        # words = string.decode('utf-8').split()
-    else:
-        pass
-        # words = [word.decode('utf-8') for word in sys.argv[1:]]
-
-    cursor = create_db()
-    # proc_words(words)
+    if len(sys.argv) < 1:
+        print "I need a path."
+        return
+    path_to_training = sys.argv[1]
+    db, c = create_db()
+    for inflection in proc_words(process_dir(path_to_training)):
+        tally_db(inflection.stem, inflection.grammar_group, c, db)
 
 def proc_words(words):
-    print('~nouns~')
     for word in words:
-      handle_noun(word)
-#      handle_verb(word)
-    cases_conj #(all the forms the word might be)
+        if word in irregulars:
+            continue
+        for inflection in handle_noun(word):
+            yield inflection
+        for inflection in handle_verb(word):
+            yield inflection
+
+def process_file(file_path):
+    with open(name=file_path, mode='r') as open_file:
+        for line in open_file:
+            for word in tokenize(line):
+                yield word
+
+def tokenize(line):
+    token_re = r"\w+"
+    for match in re.findall(token_re, line):
+        if len(match) > 1:
+            yield match.lower()
 
 
+def process_dir(dir_path):
+    for root, dirs, files in os.walk(dir_path):
+        for filename in files:
+            for word in process_file(os.path.join(root, filename)):
+                yield word
 
 def handle_noun(word):
-   string = "{word}: ".format(word=word)
-   for case in noun_cases.inflect(word):
-      string = string + '\n\t{case_name}: {word}-{suffix}'.format(word=word[:-case.suffix_length], case_name=case.name, suffix=case.suffix)
-      print(word[:case.suffix_length]) # gets stem, put in database
-   return string
+    return noun_cases.inflect(word)
 
-#def handle_verb(word):
-#   string = "{word}: ".format(word=word)
-#   for form in verb_forms.inflect(word):
-#      string = string + '\n\t{form_name}: {word}-{suffix}'.format(word=word[:-form.suffix_length], form_name=form.name, suffix=form.suffix)
-#   return string
+def handle_verb(word):
+    return verb_forms.inflect(word)
 
 def create_db():
-   db = sqlite3.connect('stems.db')
-   c = db.cursor() #creates something to enter SQL commands
-   # Create a table 'Stems' with 10 columns 
-   # c.execute('''CREATE TABLE Stems (_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL UNIQUE, Stem text, D1 long, D2 long, D3 long, D4 long, D5 long, VERB long)''')
-   # return cursor to work with
-   return c
+    db = sqlite3.connect('stems.db')
+    c = db.cursor() #creates something to enter SQL commands
+    # Create a table 'Stems' with 10 columns 
+    c.execute('''CREATE TABLE IF NOT EXISTS Stems
+            (_id INTEGER PRIMARY KEY AUTOINCREMENT
+            NOT NULL UNIQUE, Stem text, D1 long,
+            D2 long, D3 long, D4 long, D5 long, VERB long)''')
+    # return cursor to work with
+    return db, c
 
-def tally_db(stem, cases_conjs, cursor):
-   cursor.execute("SELECT _id FROM Stems WHERE Stem = ?",[stem])
-   if cursor.rowcount <= 0: # stem is not in database
-      c.execute("INSERT INTO Stems (Stem, D1, D2, D3, D4, D5, VERB) VALUES ( ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",(stem, 0, 0, 0, 0, 0, 0)) # the last 9 ?s are unnecessary
-   for case_conj in cases_conjs:
-      # TODO loop through every case and conj and tally it for that stem in the database      
-      pass
+def tally_db(stem, gg, cursor, db):
+    cursor.execute("SELECT _id FROM Stems WHERE Stem = ?",[stem])
+    if cursor.rowcount <= 0: # stem is not in database
+        cursor.execute("INSERT INTO Stems (Stem, D1, D2, D3, D4, D5, VERB) VALUES ( ?, ?, ?, ?, ?, ?, ?)",(stem, 0, 0, 0, 0, 0, 0)) # the last 9 ?s are unnecessary
+    cursor.execute("SELECT "+gg+" FROM Stems WHERE Stem = ?", (stem,))
+    data = cursor.fetchone()
+    count = int(data[0])
+    count += 1
+    if count > 10:
+        print("Stem:{stem}\n\tgg:{gg}\n\tcount:{count}".format(stem=stem,gg=gg, count=count))
+    #print count
+    cursor.execute("UPDATE Stems SET "+gg+"=? WHERE Stem = ?", (count, stem))
+
+
 
 if __name__ == "__main__":
     main()

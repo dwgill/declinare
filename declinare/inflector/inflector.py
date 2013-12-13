@@ -20,8 +20,8 @@ class Inflector(object):
         self.grammar_groups = {}
 
         # The longest length of a suffix we have found.
-        self.max_length = 0
 
+        self.max_length = 0
         for grammar_group, suffix in inflections:
             # Try to get a value for the key suffix. If the key is not
             # found, then put it in the dict as being associated with an
@@ -42,9 +42,7 @@ class Inflector(object):
         inflections = []
 
         for length in range(1,min(self.max_length + 1, len(word))):
-
             stem, suffix = word[:-length], word[-length:]
-
             gg_for_suffix = self.grammar_groups.get(suffix,[])
             inflections.extend(Inflection(stem, gg, suffix)
                     for gg in gg_for_suffix)
