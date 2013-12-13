@@ -17,11 +17,22 @@ def main():
         return
     path_to_training = sys.argv[1]
     db, c = create_db()
-    for inflection in proc_words(process_dir(path_to_training)):
+    words = list(process_dir(path_to_training))
+    for index, inflection in enumerate(proc_words(words)):
         tally_db(inflection.stem, inflection.grammar_group, c, db)
+        if index % 10000 == 0:
+            db.commit()
 
 def proc_words(words):
+    global db
+    count = 0
+    total = 4097405.0
     for word in words:
+        count += 1
+        if count % 1000 == 0:
+            print("=> " + word)
+            print("=> " + str(count)+'('+str((count/total)*100) + "%)")
+
         if word in irregulars:
             continue
         for inflection in handle_noun(word):
@@ -30,6 +41,7 @@ def proc_words(words):
             yield inflection
 
 def process_file(file_path):
+    print("=> " + file_path)
     with open(name=file_path, mode='r') as open_file:
         for line in open_file:
             for word in tokenize(line):
@@ -73,8 +85,8 @@ def tally_db(stem, gg, cursor, db):
     data = cursor.fetchone()
     count = int(data[0])
     count += 1
-    if count > 10:
-        print("Stem:{stem}\n\tgg:{gg}\n\tcount:{count}".format(stem=stem,gg=gg, count=count))
+    #if count > 10:
+    #    print("\tStem:{stem}\n\t\tgg:{gg}\n\t\tcount:{count}".format(stem=stem,gg=gg, count=count))
     #print count
     cursor.execute("UPDATE Stems SET "+gg+"=? WHERE Stem = ?", (count, stem))
 
