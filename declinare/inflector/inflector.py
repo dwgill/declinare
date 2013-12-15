@@ -38,13 +38,16 @@ class Inflector(object):
         Return all the possible inflections for word per the
         schema provided to this inflector.
         """
-        word = word.lower()
         inflections = []
-
-        for length in range(1,min(self.max_length + 1, len(word))):
+        word = word.lower()
+        for length in range(min(self.max_length, len(word)-2), 1, -1):
             stem, suffix = word[:-length], word[-length:]
             gg_for_suffix = self.grammar_groups.get(suffix,[])
-            inflections.extend(Inflection(stem, gg, suffix)
-                    for gg in gg_for_suffix)
+            if 'VERB' in gg_for_suffix:
+                inflections.append(Inflection(stem, 'VERB', suffix))
+            if 'NOUN' in gg_for_suffix:
+                inflections.append(Inflection(stem, 'NOUN', suffix))
+            if len(inflections) >= 2:
+                break
 
         return inflections
