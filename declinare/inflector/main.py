@@ -30,8 +30,8 @@ def proc_words(words):
     total = 4097405.0
     for word in words:
         count += 1
-        if count % 1000 == 0:
-            print("=> " + word)
+        if count % 100 == 0:
+            #print("=> " + word)
             print("=> " + str(count)+'('+str((count/total)*100) + "%)")
 
         if word in irregulars:
@@ -79,8 +79,9 @@ def create_db():
     return db, c
 
 def tally_db(stem, gg, cursor, db):
-    cursor.execute("SELECT _id FROM Stems WHERE Stem = ?",[stem])
-    if cursor.rowcount <= 0: # stem is not in database
+    cursor.execute("SELECT _id FROM Stems WHERE Stem = ?",(stem,))
+    indb = cursor.fetchone()
+    if indb == None: #stem is not in database
         cursor.execute("INSERT INTO Stems (Stem, NOUN, VERB, IRREGULAR) VALUES ( ?, ?, ?, ?)",
                 (stem, 0, 0, 0)) # the last 9 ?s are unnecessary
     cursor.execute("SELECT "+gg+" FROM Stems WHERE Stem = ?", (stem,))
